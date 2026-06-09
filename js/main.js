@@ -6,6 +6,7 @@ import {
   replaceCommunityCard, replaceHoleCard, addExtraHoleCard, peekNextCommunity
 } from './poker.js';
 import { enemyDecide, onHandStart, onHandEnd } from './ai.js';
+import { getPortrait } from './enemy-portraits.js';
 import {
   SKILLS, ITEMS, EQUIPMENT, EQUIPMENT_SLOTS, QUALITY_NAMES, QUALITY_COLORS,
   CLASSES, ENEMIES, SPECIAL_ENEMIES, ACHIEVEMENTS, EVENTS,
@@ -564,6 +565,7 @@ function renderEnemy() {
   const hpPct = Math.max(0, Math.min(100, (e.hp / baseHp) * 100));
   document.getElementById('enemy-hp-fill').style.width = hpPct + '%';
   document.getElementById('enemy-hp-text').textContent = e.hp;
+  document.getElementById('enemy-figure').innerHTML = getPortrait(e.id);
 }
 
 function renderBattleState() {
@@ -820,6 +822,24 @@ function applyPreHandItems() {
 }
 
 function useItem(id) {
+  const inv = G.player.inventory.find(i => i.id === id);
+  const def = ITEMS.find(i => i.id === id);
+  if (!inv || inv.qty <= 0 || !def) return;
+
+  document.getElementById('item-confirm-icon').textContent = def.icon;
+  document.getElementById('item-confirm-name').textContent = def.name;
+  document.getElementById('item-confirm-desc').textContent = def.desc;
+  document.getElementById('item-confirm-use').onclick = () => {
+    document.getElementById('item-confirm-modal').style.display = 'none';
+    executeUseItem(id);
+  };
+  document.getElementById('item-confirm-cancel').onclick = () => {
+    document.getElementById('item-confirm-modal').style.display = 'none';
+  };
+  document.getElementById('item-confirm-modal').style.display = 'flex';
+}
+
+function executeUseItem(id) {
   const inv = G.player.inventory.find(i => i.id === id);
   const def = ITEMS.find(i => i.id === id);
   if (!inv || inv.qty <= 0 || !def) return;
