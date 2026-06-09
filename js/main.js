@@ -1266,15 +1266,16 @@ function renderGameOverScreen() {
 
   const achList = document.getElementById('achievement-list-result');
   achList.innerHTML = '';
-  for (const ach of ACHIEVEMENTS) {
-    const unlocked = p.achievements.includes(ach.id);
+  const unlocked = ACHIEVEMENTS.filter(a => p.achievements.includes(a.id));
+  document.querySelector('.achievement-list').style.display = unlocked.length ? '' : 'none';
+  for (const ach of unlocked) {
     const el = document.createElement('div');
-    el.className = `achievement-item ${unlocked ? 'unlocked' : 'locked'}`;
+    el.className = 'achievement-item unlocked';
     el.innerHTML = `
       <div class="achievement-icon">${ach.icon}</div>
       <div class="achievement-name">${ach.name}</div>
       <div style="font-size:0.65rem;color:#888">${ach.desc}</div>
-      ${unlocked ? '<div class="achievement-check">✓</div>' : ''}
+      <div class="achievement-check">✓</div>
     `;
     achList.appendChild(el);
   }
