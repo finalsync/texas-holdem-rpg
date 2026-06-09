@@ -2,7 +2,7 @@
 <html lang="zh-TW">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
   <title>德州撲克 RPG</title>
   <link rel="stylesheet" href="css/style.css" />
 </head>
@@ -103,6 +103,16 @@
     <div id="event-cards" class="event-cards"></div>
   </div>
 
+  <!-- SVG sketch filter + stick figures -->
+  <svg width="0" height="0" style="position:absolute;overflow:hidden">
+    <defs>
+      <filter id="sketchy" x="-5%" y="-5%" width="110%" height="110%">
+        <feTurbulence type="fractalNoise" baseFrequency="0.03 0.06" numOctaves="2" seed="7" result="noise"/>
+        <feDisplacementMap in="SourceGraphic" in2="noise" scale="1.8" xChannelSelector="R" yChannelSelector="G"/>
+      </filter>
+    </defs>
+  </svg>
+
   <!-- ===== BATTLE SCREEN ===== -->
   <div id="screen-battle" class="screen">
     <!-- Enemy Zone -->
@@ -110,37 +120,62 @@
       <div class="enemy-info">
         <div id="enemy-name" class="enemy-name-tag">街頭賭徒 Lv.1</div>
         <div class="enemy-hp-row">
-          <span style="font-weight:700;font-size:0.7rem">HP</span>
+          <span class="hp-label">HP</span>
           <div class="enemy-hp-bar"><div id="enemy-hp-fill" class="enemy-hp-fill" style="width:100%"></div></div>
-          <span id="enemy-hp-text" style="font-size:0.7rem">5000</span>
+          <span id="enemy-hp-text" class="hp-num">5000</span>
         </div>
-        <div>
+        <div style="margin-top:2px">
           <span id="enemy-emotion" style="display:none;font-size:0.7rem"></span>
           <span id="win-rate-badge" class="win-rate-badge" style="display:none"></span>
         </div>
       </div>
-      <div class="enemy-avatar">
-        <span id="enemy-avatar-icon">🙂</span>
+      <div class="enemy-avatar-wrap">
         <div id="enemy-quote" class="enemy-speech">來一手怎麼樣？</div>
+        <div class="enemy-figure" id="enemy-figure">
+          <!-- Stick figure inserted by JS -->
+          <svg id="enemy-svg" viewBox="0 0 70 95" xmlns="http://www.w3.org/2000/svg" style="width:64px;height:80px">
+            <line x1="35" y1="30" x2="35" y2="36" stroke="#2a1a0a" stroke-width="2.5" stroke-linecap="round"/>
+            <circle cx="35" cy="20" r="13" fill="#f5e8d0" stroke="#2a1a0a" stroke-width="2.5"/>
+            <ellipse cx="35" cy="9" rx="17" ry="4.5" fill="#2a1a0a"/>
+            <path d="M19 9 Q19 0 35 0 Q51 0 51 9" fill="#2a1a0a"/>
+            <rect x="23" y="15" width="10" height="7" rx="2.5" fill="#2a1a0a"/>
+            <rect x="37" y="15" width="10" height="7" rx="2.5" fill="#2a1a0a"/>
+            <line x1="33" y1="18.5" x2="37" y2="18.5" stroke="#2a1a0a" stroke-width="1.5"/>
+            <line x1="35" y1="36" x2="35" y2="64" stroke="#2a1a0a" stroke-width="3" stroke-linecap="round"/>
+            <line x1="35" y1="44" x2="14" y2="56" stroke="#2a1a0a" stroke-width="3" stroke-linecap="round"/>
+            <line x1="35" y1="44" x2="56" y2="56" stroke="#2a1a0a" stroke-width="3" stroke-linecap="round"/>
+            <line x1="35" y1="64" x2="19" y2="86" stroke="#2a1a0a" stroke-width="3" stroke-linecap="round"/>
+            <line x1="35" y1="64" x2="51" y2="86" stroke="#2a1a0a" stroke-width="3" stroke-linecap="round"/>
+          </svg>
+        </div>
       </div>
     </div>
 
     <!-- Table Area -->
     <div class="battle-table">
-      <div class="round-pot-row">
-        <div>
-          <span class="round-info">回合: <strong id="round-phase">Pre-Flop</strong></span><br>
-          <span class="blind-info">小盲 <span id="blind-small">500</span> / 大盲 <span id="blind-big">1000</span></span>
+      <!-- Round/blind info row -->
+      <div class="round-info-row">
+        <div class="round-left">
+          <div class="round-info">回合: <strong id="round-phase">Pre-Flop</strong></div>
+          <div class="blind-info">小盲 <span id="blind-small">500</span> &nbsp; 大盲 <span id="blind-big">1000</span></div>
         </div>
-        <div class="pot-display">POT: <span id="pot-amount">0</span></div>
+        <div class="pot-display">POT<br><span id="pot-amount">0</span></div>
       </div>
 
-      <!-- Community Cards -->
-      <div id="community-cards" class="community-cards"></div>
+      <!-- Oval poker table + community cards -->
+      <div class="table-container">
+        <svg class="poker-table-svg" viewBox="0 0 340 130" xmlns="http://www.w3.org/2000/svg">
+          <ellipse cx="172" cy="72" rx="158" ry="60" fill="rgba(0,0,0,0.15)"/>
+          <ellipse cx="170" cy="68" rx="158" ry="58" fill="#2d5a27" stroke="#1a3a16" stroke-width="7"/>
+          <ellipse cx="170" cy="68" rx="142" ry="46" fill="none" stroke="#3d7a37" stroke-width="2" opacity="0.7"/>
+          <ellipse cx="170" cy="64" rx="154" ry="54" fill="none" stroke="rgba(255,255,255,0.08)" stroke-width="3"/>
+        </svg>
+        <div id="community-cards" class="community-cards"></div>
+      </div>
 
       <!-- Hole Cards -->
       <div class="hole-cards-area">
-        <div id="hole-cards" style="display:flex;gap:8px"></div>
+        <div id="hole-cards" style="display:flex;gap:10px;justify-content:center"></div>
       </div>
       <div class="hole-cards-label">你的手牌 ←</div>
     </div>
