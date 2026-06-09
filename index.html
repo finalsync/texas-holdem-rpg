@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>德州撲克 RPG</title>
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+<div id="app">
+
+  <!-- ===== TITLE SCREEN ===== -->
+  <div id="screen-title" class="screen">
+    <div class="title-logo">
+      德州撲克 RPG
+      <div style="font-size:0.9rem;margin-top:4px;font-family:var(--font-main)">Texas Hold'em RPG</div>
+    </div>
+    <div class="title-subtitle">HP歸零，遊戲結束<br>你能撐幾天？</div>
+    <button id="btn-new-game" class="btn btn-primary btn-wide" style="max-width:240px">開始新遊戲</button>
+    <button id="btn-continue" class="btn btn-wide" style="max-width:240px;display:none">繼續遊戲</button>
+    <div style="font-size:0.65rem;color:#888;text-align:center;margin-top:8px">♠ ♥ ♦ ♣</div>
+  </div>
+
+  <!-- ===== CHARACTER CREATION ===== -->
+  <div id="screen-create" class="screen">
+    <div class="create-title">創建角色</div>
+
+    <div class="name-input-row">
+      <label for="player-name">角色名稱</label>
+      <input id="player-name" type="text" placeholder="輸入名稱..." maxlength="12" />
+    </div>
+
+    <div style="font-weight:700;font-size:0.85rem;margin-top:4px">選擇職業</div>
+    <div class="class-grid" id="class-grid">
+      <div class="class-card selected" data-class-id="gambler">
+        <div class="class-card-name">賭徒</div>
+        <div class="class-card-sub">Gambler</div>
+        <div class="class-card-desc">高風險高報酬<br>初始技能：詐唬</div>
+      </div>
+      <div class="class-card" data-class-id="cheater">
+        <div class="class-card-name">老千</div>
+        <div class="class-card-sub">Cheater</div>
+        <div class="class-card-desc">操控牌局<br>初始技能：偷看</div>
+      </div>
+      <div class="class-card" data-class-id="psychologist">
+        <div class="class-card-name">心理學家</div>
+        <div class="class-card-sub">Psychologist</div>
+        <div class="class-card-desc">控制對手<br>顯示敵人情緒</div>
+      </div>
+      <div class="class-card" data-class-id="mathematician">
+        <div class="class-card-name">數學家</div>
+        <div class="class-card-sub">Mathematician</div>
+        <div class="class-card-desc">計算流<br>顯示即時勝率%</div>
+      </div>
+      <div class="class-card" data-class-id="dealer">
+        <div class="class-card-name">荷官</div>
+        <div class="class-card-sub">Dealer</div>
+        <div class="class-card-desc">控制牌桌<br>初始技能：換牌</div>
+      </div>
+      <div class="class-card" data-class-id="tycoon">
+        <div class="class-card-name">資本家</div>
+        <div class="class-card-sub">Tycoon</div>
+        <div class="class-card-desc">籌碼成長最快<br>獲得籌碼+10%</div>
+      </div>
+      <div class="class-card" data-class-id="pro">
+        <div class="class-card-name">職業選手</div>
+        <div class="class-card-sub">Pro Player</div>
+        <div class="class-card-desc">最均衡<br>初始技能：讀心</div>
+      </div>
+    </div>
+
+    <button id="btn-start-game" class="btn btn-primary btn-wide">開始遊戲</button>
+  </div>
+
+  <!-- ===== HUD (shown during event/battle/shop) ===== -->
+  <div id="hud" style="display:none">
+    <div>
+      <div id="hud-level" class="hud-level">LV.1 冒險者</div>
+      <div class="hud-bars">
+        <div class="bar-row">
+          <span class="bar-label" style="color:var(--hp-color)">HP</span>
+          <div class="bar-track"><div id="hud-hp-fill" class="bar-fill hp" style="width:100%"></div></div>
+          <span id="hud-hp-text" class="bar-text">30000/30000</span>
+        </div>
+        <div class="bar-row">
+          <span class="bar-label" style="color:var(--mp-color)">MP</span>
+          <div class="bar-track"><div id="hud-mp-fill" class="bar-fill mp" style="width:100%"></div></div>
+          <span id="hud-mp-text" class="bar-text">100/100</span>
+        </div>
+      </div>
+    </div>
+    <div class="hud-icons">
+      <button id="hud-btn-bag" class="hud-icon-btn" title="背包">🎒</button>
+      <button id="hud-btn-equip" class="hud-icon-btn" title="裝備">🛡</button>
+      <button id="hud-btn-skills" class="hud-icon-btn" title="技能">✨</button>
+    </div>
+  </div>
+
+  <!-- ===== EVENT SCREEN ===== -->
+  <div id="screen-event" class="screen">
+    <div id="day-number" class="day-header">第 1 天</div>
+    <div style="font-size:0.8rem;text-align:center;color:var(--ink-light)">選擇今天的行動</div>
+    <div id="event-cards" class="event-cards"></div>
+  </div>
+
+  <!-- ===== BATTLE SCREEN ===== -->
+  <div id="screen-battle" class="screen">
+    <!-- Enemy Zone -->
+    <div class="battle-enemy-zone">
+      <div class="enemy-info">
+        <div id="enemy-name" class="enemy-name-tag">街頭賭徒 Lv.1</div>
+        <div class="enemy-hp-row">
+          <span style="font-weight:700;font-size:0.7rem">HP</span>
+          <div class="enemy-hp-bar"><div id="enemy-hp-fill" class="enemy-hp-fill" style="width:100%"></div></div>
+          <span id="enemy-hp-text" style="font-size:0.7rem">5000</span>
+        </div>
+        <div>
+          <span id="enemy-emotion" style="display:none;font-size:0.7rem"></span>
+          <span id="win-rate-badge" class="win-rate-badge" style="display:none"></span>
+        </div>
+      </div>
+      <div class="enemy-avatar">
+        <span id="enemy-avatar-icon">🙂</span>
+        <div id="enemy-quote" class="enemy-speech">來一手怎麼樣？</div>
+      </div>
+    </div>
+
+    <!-- Table Area -->
+    <div class="battle-table">
+      <div class="round-pot-row">
+        <div>
+          <span class="round-info">回合: <strong id="round-phase">Pre-Flop</strong></span><br>
+          <span class="blind-info">小盲 <span id="blind-small">500</span> / 大盲 <span id="blind-big">1000</span></span>
+        </div>
+        <div class="pot-display">POT: <span id="pot-amount">0</span></div>
+      </div>
+
+      <!-- Community Cards -->
+      <div id="community-cards" class="community-cards"></div>
+
+      <!-- Hole Cards -->
+      <div class="hole-cards-area">
+        <div id="hole-cards" style="display:flex;gap:8px"></div>
+      </div>
+      <div class="hole-cards-label">你的手牌 ←</div>
+    </div>
+
+    <!-- Action Buttons -->
+    <div id="action-bar" class="action-bar"></div>
+
+    <!-- Bottom Info Panel -->
+    <div class="bottom-panel">
+      <!-- Col 1: Battle Stats -->
+      <div class="panel-col">
+        <div class="panel-title">戰鬥資訊</div>
+        <div class="battle-stats-list">
+          <div>你的籌碼 <span id="stat-player-chips">30000</span></div>
+          <div>敵人籌碼 <span id="stat-enemy-chips">5000</span></div>
+          <div>本次下注 <span id="stat-current-bet">0</span></div>
+          <div>底池總額 <span id="stat-pot">0</span></div>
+        </div>
+      </div>
+
+      <!-- Col 2: Message Log -->
+      <div class="panel-col">
+        <div class="panel-title">訊息記錄</div>
+        <div id="msg-log" class="msg-log"></div>
+      </div>
+
+      <!-- Col 3: Quick Items -->
+      <div class="panel-col">
+        <div class="panel-title">快捷道具</div>
+        <div id="quick-items" class="quick-items"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== SHOP SCREEN ===== -->
+  <div id="screen-shop" class="screen">
+    <div class="shop-header">
+      <span style="font-weight:700;font-size:1rem">🏪 神秘商店</span>
+      <span id="shop-chips" class="shop-chips">籌碼：30000</span>
+    </div>
+    <div id="shop-grid" class="shop-grid"></div>
+    <div style="padding:12px">
+      <button id="shop-leave" class="btn btn-wide">離開商店</button>
+    </div>
+  </div>
+
+  <!-- ===== GAME OVER SCREEN ===== -->
+  <div id="screen-gameover" class="screen">
+    <div class="gameover-title">遊戲結束</div>
+    <div class="result-stats">
+      <div class="result-stat-row">生存天數 <span id="result-days" class="result-stat-val">0</span></div>
+      <div class="result-stat-row">最終等級 <span id="result-level" class="result-stat-val">LV.1</span></div>
+      <div class="result-stat-row">擊敗敵人 <span id="result-battles" class="result-stat-val">0</span></div>
+      <div class="result-stat-row">累計贏得籌碼 <span id="result-chips" class="result-stat-val">0</span></div>
+      <div class="result-stat-row">贏得手牌數 <span id="result-hands" class="result-stat-val">0</span></div>
+    </div>
+    <div class="achievement-list">
+      <div class="achievement-title">🏆 成就</div>
+      <div id="achievement-list-result"></div>
+    </div>
+    <button id="btn-restart" class="btn btn-primary btn-wide">再來一局</button>
+  </div>
+
+  <!-- ===== OVERLAYS ===== -->
+  <!-- Backpack -->
+  <div id="overlay-backpack" class="overlay" style="display:none">
+    <div class="overlay-panel">
+      <div class="overlay-header">
+        <span class="overlay-title">🎒 背包</span>
+        <span class="overlay-close">✕</span>
+      </div>
+      <div class="overlay-body">
+        <div class="inventory-list"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Equipment -->
+  <div id="overlay-equip" class="overlay" style="display:none">
+    <div class="overlay-panel">
+      <div class="overlay-header">
+        <span class="overlay-title">🛡 裝備</span>
+        <span class="overlay-close">✕</span>
+      </div>
+      <div class="overlay-body">
+        <div class="equip-grid"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Skills -->
+  <div id="overlay-skills" class="overlay" style="display:none">
+    <div class="overlay-panel">
+      <div class="overlay-header">
+        <span class="overlay-title">✨ 技能</span>
+        <span class="overlay-close">✕</span>
+      </div>
+      <div class="overlay-body">
+        <div class="skill-list"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Bet Modal -->
+  <div id="bet-modal" class="bet-modal" style="display:none">
+    <div class="bet-modal-box">
+      <div class="bet-modal-title">設定下注金額</div>
+      <input id="bet-slider" type="range" class="bet-slider" min="0" max="30000" step="500" value="1000" />
+      <div id="bet-value" class="bet-value">1000</div>
+      <div class="bet-buttons">
+        <button id="bet-cancel" class="btn btn-wide">取消</button>
+        <button id="bet-confirm" class="btn btn-primary btn-wide">確認</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast -->
+  <div id="toast" class="toast"></div>
+
+</div>
+
+<script>
+  // Show HUD when not on title/create/gameover screens
+  const HUD = document.getElementById('hud');
+  const observer = new MutationObserver(() => {
+    const active = document.querySelector('.screen.active');
+    const noHud = ['screen-title','screen-create','screen-gameover'];
+    if (active && !noHud.includes(active.id)) {
+      HUD.style.display = 'flex';
+    } else {
+      HUD.style.display = 'none';
+    }
+  });
+  observer.observe(document.getElementById('app'), { subtree: true, attributes: true, attributeFilter: ['class'] });
+
+  // Build class card click handlers (before module loads)
+  document.querySelectorAll('.class-card').forEach(card => {
+    card.addEventListener('click', () => {
+      document.querySelectorAll('.class-card').forEach(c => c.classList.remove('selected'));
+      card.classList.add('selected');
+    });
+  });
+</script>
+<script type="module" src="js/main.js"></script>
+</body>
+</html>
