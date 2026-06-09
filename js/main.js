@@ -372,8 +372,13 @@ function advanceRound() {
     const phaseName = { flop: 'Flop', turn: 'Turn', river: 'River', showdown: 'Showdown' }[ps.phase] || ps.phase;
     G.msgLog.push(`--- ${phaseName} ---`);
     renderBattleUI();
-    // Determine who acts first; renderBattleUI already calls renderActionButtons
-    // which will show "waiting" if enemy goes first
+    // If either player is all-in, no betting needed — auto-advance through remaining streets
+    if (ps.playerStack === 0 || ps.enemyStack === 0) {
+      ps.playerActed = true;
+      ps.enemyActed = true;
+      setTimeout(() => advanceRound(), 900);
+      return;
+    }
     if (!playerGoesFirst()) {
       setTimeout(() => doEnemyAction(), 600);
     }
@@ -555,13 +560,10 @@ function renderEnemy() {
   if (!e) return;
   document.getElementById('enemy-name').textContent = `${e.name} Lv.${e.lv}`;
   document.getElementById('enemy-quote').textContent = e.quote || '...';
-  const hpPct = Math.max(0, Math.min(100, (e.hp / (ENEMIES.find(x => x.id === e.id)?.hp || SPECIAL_ENEMIES.find(x => x.id === e.id)?.hp || e.hp)) * 100));
+  const baseHp = ENEMIES.find(x => x.id === e.id)?.hp || SPECIAL_ENEMIES.find(x => x.id === e.id)?.hp || e.hp;
+  const hpPct = Math.max(0, Math.min(100, (e.hp / baseHp) * 100));
   document.getElementById('enemy-hp-fill').style.width = hpPct + '%';
   document.getElementById('enemy-hp-text').textContent = e.hp;
-
-  // Emoji avatar based on AI type
-  const avatars = { novice: '🙂', lag: '😤', tag: '😐', bluffer: '😏', boss: '😈', special: '⭐' };
-  document.getElementById('enemy-avatar-icon').textContent = e.special ? (avatars[e.aiType] || '⭐') : avatars[e.aiType] || '🙂';
 }
 
 function renderBattleState() {

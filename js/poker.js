@@ -235,10 +235,13 @@ function resolveShowdown(state) {
   else state.log.push(`平局`);
 }
 
-// Returns whether both players have acted and bets are equal (round over)
+// Returns whether both players have acted and bets are settled
 function isBettingRoundOver(state) {
   if (!state.playerActed || !state.enemyActed) return false;
-  return state.playerBet === state.enemyBet;
+  if (state.playerBet === state.enemyBet) return true;
+  // All-in: one player can't match the bet — betting is over
+  if (state.playerStack === 0 || state.enemyStack === 0) return true;
+  return false;
 }
 
 // Apply a player action. Returns updated state (mutates in place).
