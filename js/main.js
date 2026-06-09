@@ -16,6 +16,7 @@ import {
 
 // ===== GAME STATE =====
 let G = null; // global game state
+let _prevCommunityCount = 0; // tracks revealed community cards for flip animation
 
 function defaultPlayer(name, classId) {
   const cls = CLASSES.find(c => c.id === classId) || CLASSES[0];
@@ -242,6 +243,7 @@ function startBattle(enemyDef) {
 function startNewHand() {
   G.handCount++;
   G.usedRedoThisHand = false;
+  _prevCommunityCount = 0;
 
   const p = G.player;
   const e = G.currentEnemy;
@@ -347,6 +349,10 @@ function doEnemyAction() {
   applyAction(ps, 'enemy', decision.action, decision.amount || 0);
   G.msgLog.push(...ps.log);
   ps.log = [];
+
+  if (decision.action === 'bet' || decision.action === 'raise' || decision.action === 'allin' || decision.action === 'call') {
+    spawnChip(document.getElementById('enemy-hp-text'), document.getElementById('pot-amount'));
+  }
 
   renderBattleLog();
   renderBattleState();
@@ -553,6 +559,7 @@ function renderBattleUI() {
   renderActionButtons();
   renderBattleLog();
   renderQuickItems();
+  updateDealerButton();
   updateHUD();
 }
 
@@ -615,13 +622,43 @@ function renderCommunityCards() {
     const card = document.createElement('div');
     if (i < ps.communityCards.length) {
       const c = ps.communityCards[i];
-      card.className = `card ${isRed(c.suit) ? 'red' : 'black'}`;
+      const isNew = i >= _prevCommunityCount;
+      card.className = `card ${isRed(c.suit) ? 'red' : 'black'}${isNew ? ' flip-in' : ''}`;
+      if (isNew) card.style.animationDelay = `${(i - _prevCommunityCount) * 0.12}s`;
       card.innerHTML = `<div class="card-rank">${c.rank}</div><div class="card-suit">${c.suit}</div>`;
     } else {
       card.className = 'card face-down';
     }
     container.appendChild(card);
   }
+  _prevCommunityCount = ps.communityCards.length;
+}
+
+function updateDealerButton() {
+  const ps = G.pokerState;
+  const btn = document.getElementById('dealer-btn');
+  if (!ps || !btn) return;
+  btn.classList.remove('player-side', 'enemy-side', 'visible');
+  if (ps.playerIsDealer) {
+    btn.classList.add('player-side', 'visible');
+  } else {
+    btn.classList.add('enemy-side', 'visible');
+  }
+}
+
+function spawnChip(fromEl, toEl) {
+  if (!fromEl || !toEl) return;
+  const fr = fromEl.getBoundingClientRect();
+  const tr = toEl.getBoundingClientRect();
+  const chip = document.createElement('div');
+  chip.className = 'chip-fly';
+  chip.textContent = '●';
+  chip.style.left = (fr.left + fr.width / 2) + 'px';
+  chip.style.top  = (fr.top  + fr.height / 2) + 'px';
+  chip.style.setProperty('--tx', (tr.left + tr.width/2  - fr.left - fr.width/2)  + 'px');
+  chip.style.setProperty('--ty', (tr.top  + tr.height/2 - fr.top  - fr.height/2) + 'px');
+  document.body.appendChild(chip);
+  chip.addEventListener('animationend', () => chip.remove(), { once: true });
 }
 
 function renderHoleCards() {
@@ -728,6 +765,10 @@ function playerAction(action, amount = 0) {
   applyAction(ps, 'player', action, amount);
   G.msgLog.push(...ps.log);
   ps.log = [];
+
+  if (action === 'bet' || action === 'raise' || action === 'allin' || action === 'call') {
+    spawnChip(document.getElementById('stat-player-chips'), document.getElementById('pot-amount'));
+  }
 
   renderBattleState();
   renderBattleLog();
